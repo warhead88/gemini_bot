@@ -8,29 +8,6 @@ from sessions.services.gemini_service import is_chat_active, send_message, start
 
 router = Router(name="main")
 
-
-@router.message(CommandStart())
-async def cmd_start(message: Message) -> None:
-    """Обработчик /start."""
-    await message.answer(
-        "Привет! Я бот с ИИ-агентом на базе Gemini.\n\n"
-        "Команды:\n"
-        "/chat — начать диалог с ИИ\n"
-        "/stop — завершить диалог"
-    )
-
-
-@router.message(Command("chat"))
-async def cmd_chat(message: Message) -> None:
-    """Запуск диалога с ИИ."""
-    user_id = message.from_user.id if message.from_user else 0
-    start_chat(user_id)
-    await message.answer(
-        "Диалог с ИИ запущен. Пишите сообщения — бот будет отвечать от имени агента.\n"
-        "Команда /stop завершит диалог."
-    )
-
-
 @router.message(Command("stop"))
 async def cmd_stop(message: Message) -> None:
     """Завершение диалога с ИИ."""
