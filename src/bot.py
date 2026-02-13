@@ -9,7 +9,7 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 
 from src.config import get_bot_token
-from src.settings.handlers import start
+from src.settings.handlers import start, chat
 
 logging.basicConfig(
     level=logging.INFO,
@@ -27,9 +27,9 @@ async def main() -> None:
     )
     dp = Dispatcher()
     dp.include_router(start.router)
+    dp.include_router(chat.router)
     logger.info("Бот запускается...")
     await dp.start_polling(bot)
-
 
 if __name__ == "__main__":
     asyncio.run(main())

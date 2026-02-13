@@ -4,7 +4,7 @@ from aiogram import Router
 from aiogram.filters import Command, CommandStart
 from aiogram.types import Message
 
-from gemini_service import is_chat_active, send_message, start_chat, stop_chat
+from sessions.services.gemini_service import is_chat_active, send_message, start_chat, stop_chat
 
 router = Router(name="main")
 

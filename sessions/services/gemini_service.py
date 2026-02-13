@@ -5,7 +5,7 @@ from typing import Any
 
 from google import genai
 
-from config import get_gemini_api_key
+from src.config import get_gemini_api_key
 
 logger = logging.getLogger(__name__)
 
