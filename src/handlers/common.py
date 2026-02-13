@@ -2,11 +2,12 @@ from aiogram import Router
 from aiogram.filters import CommandStart
 from aiogram.types import Message
 
-router = Router()
+router = Router(name="common_commands")
 
 
 @router.message(CommandStart())
-async def start(message: Message):
+async def cmd_start(message: Message):
+    """Обработчик /start."""
     await message.answer(
         "Привет! Я бот с ИИ-агентом на базе Gemini.\n\n"
         "Команды:\n"

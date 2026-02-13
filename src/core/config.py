@@ -2,12 +2,13 @@
 
 import os
 from pathlib import Path
-
 from dotenv import load_dotenv
 
-# Подгрузка .env из корня проекта
-env_path = Path(__file__).resolve().parent / ".env"
-load_dotenv(dotenv_path=env_path)
+# Путь к корню проекта (где лежит .env)
+BASE_DIR = Path(__file__).resolve().parents[2]
+ENV_PATH = BASE_DIR / ".env"
+
+load_dotenv(dotenv_path=ENV_PATH)
 
 
 def get_bot_token() -> str:

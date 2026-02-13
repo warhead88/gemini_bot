@@ -1,4 +1,4 @@
-"""Точка входа: экземпляр бота и основная логика запуска."""
+"""Точка входа: запуск бота."""
 
 import asyncio
 import logging
@@ -8,8 +8,8 @@ from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 
-from src.config import get_bot_token
-from src.settings.handlers import start, chat, stop
+from src.core.config import get_bot_token
+from src.handlers import main_router
 
 logging.basicConfig(
     level=logging.INFO,
@@ -20,17 +20,20 @@ logger = logging.getLogger(__name__)
 
 
 async def main() -> None:
-    token = get_bot_token()
     bot = Bot(
-        token=token,
+        token=get_bot_token(),
         default=DefaultBotProperties(parse_mode=ParseMode.HTML),
     )
+    
     dp = Dispatcher()
-    dp.include_router(start.router)
-    dp.include_router(chat.router)
-    dp.include_router(stop.router)
+    dp.include_router(main_router)
+    
     logger.info("Бот запускается...")
     await dp.start_polling(bot)
 
+
 if __name__ == "__main__":
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        logger.info("Бот остановлен пользователем")
