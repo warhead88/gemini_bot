@@ -49,7 +49,7 @@ async def send_message(user_id: int, text: str) -> str:
     if not chat:
         return "Диалог не активен. Используйте /chat чтобы начать."
     
-    prompt = text + "\n\nОтвечай на русском языке в формате HTML (только базовые теги: b, i, u, s, code, pre, blockquote)."
+    prompt = text + "\n\nОтвечай на русском языке в формате HTML (только базовые теги: b, i, u, s, code, pre, blockquote), без сплошного текста, дели текст на абзацы, между абзацами пустая строка."
     
     try:
         response = await chat.send_message(prompt)
