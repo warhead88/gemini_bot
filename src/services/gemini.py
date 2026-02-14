@@ -1,7 +1,7 @@
 """Сервис для диалога с моделью Gemini (Google GenAI SDK)."""
 
 import logging
-from typing import Any
+from typing import Any, AsyncGenerator
 from google import genai
 from src.core.config import get_gemini_api_key
 
@@ -24,7 +24,10 @@ def start_chat(user_id: int) -> None:
     if user_id in _active_chats:
         return
     client = _get_client()
-    chat = client.aio.chats.create(model=GEMINI_MODEL)
+    chat = client.aio.chats.create(model=GEMINI_MODEL, config=genai.types.GenerateContentConfig(
+        response_schema=None,
+        system_instruction="Отвечай на русском языке в формате HTML (только эти теги: b, i, u, s, code, pre, blockquote), без сплошного текста, дели текст на абзацы, между абзацами пустая строка."
+    ))
     _active_chats[user_id] = chat
     logger.info("Чат запущен для user_id=%s", user_id)
 
@@ -43,17 +46,19 @@ def is_chat_active(user_id: int) -> bool:
     return user_id in _active_chats
 
 
-async def send_message(user_id: int, text: str) -> str:
-    """Отправляет сообщение и возвращает ответ в формате HTML на русском."""
+async def send_message(user_id: int, text: str) -> AsyncGenerator[str, None]:
+    """Отправляет сообщение и возвращает асинхронный генератор чанков ответа."""
     chat = _active_chats.get(user_id)
     if not chat:
-        return "Диалог не активен. Используйте /chat чтобы начать."
-    
-    prompt = text + "\n\nОтвечай на русском языке в формате HTML (только базовые теги: b, i, u, s, code, pre, blockquote), без сплошного текста, дели текст на абзацы, между абзацами пустая строка."
+        yield "Диалог не активен. Используйте /chat чтобы начать."
+        return
     
     try:
-        response = await chat.send_message(prompt)
-        return response.text or ""
+        # В google-genai SDK метод aio.chats.send_message_stream асинхронный
+        response = await chat.send_message_stream(text)
+        async for chunk in response:
+            if chunk.text:
+                yield chunk.text
     except Exception as e:
         logger.exception("Ошибка Gemini для user_id=%s: %s", user_id, e)
-        return f"Ошибка при обращении к ИИ: {e!s}"
+        yield f"Ошибка при обращении к ИИ: {e!s}"

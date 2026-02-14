@@ -10,6 +10,7 @@ from aiogram.enums import ParseMode
 
 from src.core.config import get_bot_token
 from src.handlers import main_router
+from src.middlewares.chat_check import ChatActiveMiddleware
 
 logging.basicConfig(
     level=logging.INFO,
@@ -27,6 +28,8 @@ async def main() -> None:
     
     dp = Dispatcher()
     dp.include_router(main_router)
+
+    dp.message.middleware(ChatActiveMiddleware())
     
     logger.info("Бот запускается...")
     await dp.start_polling(bot)

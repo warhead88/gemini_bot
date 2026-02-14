@@ -1,7 +1,11 @@
+import logging
+
 from aiogram import Router
 from aiogram.filters import Command
 from aiogram.types import Message
 from src.services.gemini import start_chat, stop_chat, is_chat_active, send_message
+
+logger = logging.getLogger(__name__)
 
 router = Router(name="chat_logic")
 
@@ -32,14 +36,40 @@ async def message_handler(message: Message):
     """Обработка текстовых сообщений."""
     user_id = message.from_user.id if message.from_user else 0
     
-    if not is_chat_active(user_id):
-        await message.answer("Чтобы пообщаться с ИИ, сначала введите команду /chat")
-        return
-
+    # Middleware уже проверил, что чат активен — здесь можно просто работать с Gemini
     text = message.text or message.caption
     if not text or not text.strip():
         await message.answer("Пожалуйста, отправьте текстовое сообщение.")
         return
 
-    reply = await send_message(user_id, text.strip())
-    await message.answer(reply or "Извините, я не смог сформулировать ответ.")
+    import time
+    
+    reply = ""
+    last_edit_time = 0
+    edit_interval = 1.0  # Секунда между редактированиями
+
+    msg = await message.answer("🔍")
+    
+    try:
+        async for chunk in send_message(user_id, text.strip()):
+            reply += chunk
+            
+            # Редактируем сообщение только если прошло достаточно времени
+            current_time = time.time()
+            if current_time - last_edit_time > edit_interval:
+                try:
+                    await msg.edit_text(reply)
+                    last_edit_time = current_time
+                except Exception:
+                    # Игнорируем ошибки редактирования (например, если текст не изменился)
+                    pass
+        
+        # Финальное обновление после завершения генерации
+        try:
+            await msg.edit_text(reply)
+        except:
+            pass
+
+    except Exception as e:
+        logger.error(f"Error in streaming: {e}")
+        await message.answer("Произошла ошибка при получении ответа.")
