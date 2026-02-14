@@ -25,3 +25,10 @@ def get_gemini_api_key() -> str:
     if not key:
         raise ValueError("GEMINI_API_KEY не задан в .env или окружении")
     return key
+
+def get_redis_url() -> str:
+    """URL Redis из REDIS_URL."""
+    url = os.getenv("REDIS_URL")
+    if not url:
+        raise ValueError("REDIS_URL не задан в .env или окружении")
+    return url

@@ -1,7 +1,7 @@
 from typing import Any, Awaitable, Callable, Dict
 from aiogram import BaseMiddleware
 from aiogram.types import TelegramObject, Message
-from src.services.gemini import is_chat_active
+from src.services.redis_storage import RedisStorage
 
 class ChatActiveMiddleware(BaseMiddleware):
     async def __call__(
@@ -10,18 +10,16 @@ class ChatActiveMiddleware(BaseMiddleware):
         event: TelegramObject,
         data: Dict[str, Any]
     ) -> Any:
-        # Проверяем только сообщения (Message)
         if isinstance(event, Message):
-            # Игнорируем команды /start и /chat (чтобы их можно было вызвать всегда)
             if event.text and event.text.startswith(('/start', '/chat')):
                 return await handler(event, data)
 
             user_id = event.from_user.id if event.from_user else 0
+            redis: RedisStorage = data.get("redis")
             
-            # Если чат не активен — прерываем цепочку и отвечаем пользователю
-            if not is_chat_active(user_id):
+            # Проверяем наличие ключа в Redis
+            if not redis or not await redis.client.exists(f"chat:{user_id}"):
                 await event.answer("Сначала введите команду /chat, чтобы начать общение!")
-                return # Хендлер даже не будет вызван!
+                return
 
-        # Если всё ок — идем дальше к хендлеру
         return await handler(event, data)

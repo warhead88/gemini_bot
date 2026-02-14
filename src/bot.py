@@ -11,6 +11,7 @@ from aiogram.enums import ParseMode
 from src.core.config import get_bot_token
 from src.handlers import main_router
 from src.middlewares.chat_check import ChatActiveMiddleware
+from src.services.redis_storage import RedisStorage
 
 logging.basicConfig(
     level=logging.INFO,
@@ -21,18 +22,30 @@ logger = logging.getLogger(__name__)
 
 
 async def main() -> None:
+    # Инициализация бота
     bot = Bot(
         token=get_bot_token(),
         default=DefaultBotProperties(parse_mode=ParseMode.HTML),
     )
     
+    # Инициализация Redis (Единая точка входа для БД)
+    redis_storage = RedisStorage()
+    
     dp = Dispatcher()
+    
+    # Пробрасываем redis_storage во все хендлеры и middleware
+    dp["redis"] = redis_storage
+    
     dp.include_router(main_router)
-
     dp.message.middleware(ChatActiveMiddleware())
     
-    logger.info("Бот запускается...")
-    await dp.start_polling(bot)
+    logger.info("Бот запускается с поддержкой Redis...")
+    
+    try:
+        await dp.start_polling(bot)
+    finally:
+        # Закрываем соединение с Redis при выключении
+        await redis_storage.client.aclose()
 
 
 if __name__ == "__main__":
